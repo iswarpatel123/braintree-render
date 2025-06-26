@@ -1,4 +1,4 @@
-import express from 'express';
+import express, { Request, Response } from 'express';
 import braintree from 'braintree';
 import { Client, Databases } from 'node-appwrite';
 import 'dotenv/config';
@@ -32,11 +32,11 @@ async function retryAsync<T>(fn: () => Promise<T>, retries: number, delay = 1000
   throw lastError;
 }
 
-app.get('/ping', (req, res) => {
+app.get('/ping', (req: Request, res: Response) => {
   res.json({ ok: true, message: 'pong' });
 });
 
-app.get('/client_token', async (req, res) => {
+app.get('/client_token', async (req: Request, res: Response) => {
   try {
     //const response = await retryAsync<braintree.ClientTokenResponse>(() => gateway.clientToken.generate({}), 3);
     const response = await retryAsync(() => gateway.clientToken.generate({}), 3);
@@ -46,7 +46,7 @@ app.get('/client_token', async (req, res) => {
   }
 });
 
-app.post('/checkout', async (req, res): Promise<void> => {
+app.post('/checkout', async (req: Request, res: Response): Promise<void> => {
   const { name, email, phone, shippingAddress, billingAddress, orderDetails, payment_method_nonce, amount, deviceData } = req.body;
 
   if (!name || !email || !shippingAddress || !orderDetails || !payment_method_nonce || !amount) {
