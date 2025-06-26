@@ -4,13 +4,14 @@
   "main": "app.ts",
   "type": "module",
   "scripts": {
-    "dev": "ts-node-dev --respawn --transpile-only app.ts",
+    "dev": "node --loader ts-node/esm app.ts",
     "build": "tsc",
     "start": "node dist/index.js"
   },
   "dependencies": {
     "appwrite": "^18.1.1",
     "braintree": "^3.31.0",
+    "dotenv": "^16.6.0",
     "express": "^5.1.0",
     "node-appwrite": "^17.0.0"
   },

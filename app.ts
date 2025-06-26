@@ -1,6 +1,7 @@
 import express from 'express';
 import braintree from 'braintree';
 import { Client, Databases } from 'node-appwrite';
+import 'dotenv/config';
 
 const app = express();
 app.use(express.json());
@@ -75,7 +76,6 @@ app.post('/checkout', async (req, res): Promise<void> => {
         orderId,
         orderDetails,
         creationTime: new Date().toISOString(),
-        updateTime: new Date().toISOString(),
         status: 'Pending',
         transactionId: result.transaction?.id
       };
