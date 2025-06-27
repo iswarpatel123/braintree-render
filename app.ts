@@ -117,7 +117,7 @@ app.post('/checkout', async (req: Request, res: Response): Promise<void> => {
         });
       }
     } else {
-      const status = result.transaction.status;
+      const status = result.message || 'Transaction failed';
       res.status(400).json({ ok: false, message: status });
       return;
     }
