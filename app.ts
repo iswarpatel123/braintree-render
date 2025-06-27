@@ -1,10 +1,22 @@
-import express, { Request, Response } from 'express';
+import express, { Request, Response, NextFunction } from 'express';
 import braintree from 'braintree';
 import { Client, Databases } from 'node-appwrite';
 import 'dotenv/config';
 
 const app = express();
 app.use(express.json());
+
+// CORS Middleware
+app.use((req: Request, res: Response, next: NextFunction) => {
+  res.header('Access-Control-Allow-Origin', '*');
+  res.header('Access-Control-Allow-Methods', 'GET,POST,OPTIONS');
+  res.header('Access-Control-Allow-Headers', 'Content-Type');
+  if (req.method === 'OPTIONS') {
+    res.sendStatus(200);
+  } else {
+    next();
+  }
+});
 
 const environment = process.env.BRAINTREE_ENVIRONMENT === 'Production'
   ? braintree.Environment.Production
@@ -124,3 +136,5 @@ const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });
+
+export default app;
