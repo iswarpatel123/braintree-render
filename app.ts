@@ -82,13 +82,14 @@ app.post('/checkout', async (req: Request, res: Response): Promise<void> => {
         name,
         email,
         phone,
-        shippingAddress,
-        billingAddress,
+        shippingaddress: shippingAddress,
+        billingaddress: billingAddress,
         orderId,
         orderDetails,
         creationTime: new Date().toISOString(),
         status: 'Pending',
-        transactionId: result.transaction?.id
+        transactionId: result.transaction?.id,
+        amount: parseFloat(amount),
       };
 
       // Save order to Appwrite
