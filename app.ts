@@ -50,7 +50,6 @@ app.get('/ping', (req: Request, res: Response) => {
 
 app.get('/client_token', async (req: Request, res: Response) => {
   try {
-    //const response = await retryAsync<braintree.ClientTokenResponse>(() => gateway.clientToken.generate({}), 3);
     const response = await retryAsync(() => gateway.clientToken.generate({}), 3);
     res.json({ ok: true, clientToken: response.clientToken });
   } catch (err: any) {
@@ -113,7 +112,7 @@ app.post('/checkout', async (req: Request, res: Response): Promise<void> => {
         res.status(500).json({
           ok: false,
           message: 'Payment processed but order creation failed. Please contact support.',
-          transactionId: result.transaction?.id
+          error: JSON.stringify(dbError)
         });
       }
     } else {
