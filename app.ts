@@ -57,6 +57,43 @@ app.get('/client_token', async (req: Request, res: Response) => {
   }
 });
 
+// In-memory order queue
+const orderQueue: any[] = [];
+
+// Background worker to process the queue
+async function processOrderQueue() {
+  while (true) {
+    if (orderQueue.length > 0) {
+      const order = orderQueue.shift();
+      try {
+        const client = new Client();
+        client
+          .setEndpoint(process.env.APPWRITE_ENDPOINT!)
+          .setProject(process.env.APPWRITE_PROJECT!)
+          .setKey(process.env.APPWRITE_API_KEY!);
+
+        const database = new Databases(client);
+        await retryAsync(() => database.createDocument(
+          process.env.APPWRITE_DATABASE_ID!,
+          process.env.APPWRITE_ORDERS_COLLECTION_ID!,
+          order.orderId,
+          order
+        ), 3);
+        // Optionally log success
+      } catch (dbError: any) {
+        // Optionally log or re-queue on failure
+        console.error('Order DB write failed:', dbError, order);
+      }
+    } else {
+      // Sleep for a short interval if queue is empty
+      await new Promise(resolve => setTimeout(resolve, 500));
+    }
+  }
+}
+
+// Start the background worker
+processOrderQueue();
+
 app.post('/checkout', async (req: Request, res: Response): Promise<void> => {
   const { name, email, phone, shippingAddress, billingAddress, orderDetails, payment_method_nonce, amount, deviceData } = req.body;
 
@@ -75,7 +112,6 @@ app.post('/checkout', async (req: Request, res: Response): Promise<void> => {
       }
     });
 
-
     if (result.success) {
       const orderId = generateOrderId();
       const order = {
@@ -92,30 +128,11 @@ app.post('/checkout', async (req: Request, res: Response): Promise<void> => {
         amount: parseFloat(amount),
       };
 
-      // Save order to Appwrite
-      try {
-        const client = new Client();
-        client
-          .setEndpoint(process.env.APPWRITE_ENDPOINT!)
-          .setProject(process.env.APPWRITE_PROJECT!)
-          .setKey(process.env.APPWRITE_API_KEY!);
+      // Queue the order for background DB write
+      orderQueue.push(order);
 
-        const database = new Databases(client);
-        await retryAsync(() => database.createDocument(
-          process.env.APPWRITE_DATABASE_ID!,
-          process.env.APPWRITE_ORDERS_COLLECTION_ID!,
-          orderId,
-          order
-        ), 3);
-
-        res.json({ ok: true, orderId, transactionId: result.transaction?.id });
-      } catch (dbError: any) {
-        res.status(500).json({
-          ok: false,
-          message: 'Payment processed but order creation failed. Please contact support.',
-          error: JSON.stringify(dbError)
-        });
-      }
+      // Respond immediately
+      res.json({ ok: true, orderId, transactionId: result.transaction?.id });
     } else {
       const status = result.message || 'Transaction failed';
       res.status(400).json({ ok: false, message: status });
